@@ -1,49 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Exercise 1</title>
+</head>
 
-plt.figure(figsize=(9, 5))
+<body>
 
-x = np.arange(len(methods))
+<h1>Exercise 1</h1>
+
+<p>
+
+import os
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import kagglehub
+
+from sklearn.model_selection import train_test_split
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+path = kagglehub.dataset_download("adityakadiwal/water-potability")
+
+file = os.path.join(path, "water_potability.csv")
+
+df = pd.read_csv(file)
+
+print(df.shape)
+print(df.isnull().sum())
+
+methods = ["Drop Rows", "Mean", "Median", "Constant"]
+
+train_acc = []
+test_acc = []
+
+df1 = df.dropna()
+
+X = df1.drop("Potability", axis=1)
+y = df1["Potability"]
+
+xtr, xte, ytr, yte = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+
+sc = StandardScaler()
+
+xtr = sc.fit_transform(xtr)
+xte = sc.transform(xte)
+
+rf = RandomForestClassifier(
+    n_estimators=200,
+    max_depth=10,
+    random_state=42
+)
+
+rf.fit(xtr, ytr)
+
+tr_pred = rf.predict(xtr)
+te_pred = rf.predict(xte)
+
+tr_acc = accuracy_score(ytr, tr_pred)
+te_acc = accuracy_score(yte, te_pred)
+
+train_acc.append(tr_acc)
+test_acc.append(te_acc)
+
+print("\nDROP ROWS")
+print("Train Accuracy:", round(tr_acc, 4))
+print("Test Accuracy :", round(te_acc, 4))
+
+X = df.drop("Potability", axis=1)
+y = df["Potability"]
+
+xtr, xte, ytr, yte = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+
+for m in ["mean", "median", "constant"]:
+
+    if m == "constant":
+        imp = SimpleImputer(
+            strategy="constant",
+            fill_value=0
+        )
+    else:
+        imp = SimpleImputer(strategy=m)
+
+    model = Pipeline([
+        ("imp", imp),
+        ("sc", StandardScaler()),
+        ("rf", RandomForestClassifier(
+            n_estimators=200,
+            max_depth=10,
+            random_state=42
+        ))
+    ])
+
+    model.fit(xtr, ytr)
+
+    tr_pred = model.predict(xtr)
+    te_pred = model.predict(xte)
+
+    tr_acc = accuracy_score(ytr, tr_pred)
+    te_acc = accuracy_score(yte, te_pred)
+
+    train_acc.append(tr_acc)
+    test_acc.append(te_acc)
+
+    print(f"\n{m.upper()} IMPUTATION")
+    print("Train Accuracy:", round(tr_acc, 4))
+    print("Test Accuracy :", round(te_acc, 4))
+
+plt.figure(figsize=(8, 5))
 
 plt.plot(
-    x,
+    methods,
     train_acc,
     marker="o",
-    markersize=8,
-    linewidth=3,
-    linestyle="-",
+    linewidth=2,
     label="Train Accuracy"
 )
 
 plt.plot(
-    x,
+    methods,
     test_acc,
-    marker="s",
-    markersize=8,
-    linewidth=3,
-    linestyle="--",
+    marker="o",
+    linewidth=2,
     label="Test Accuracy"
 )
 
-plt.xticks(x, methods)
-
-for i in range(len(methods)):
-
-    plt.text(
-        x[i],
-        train_acc[i] + 0.005,
-        round(train_acc[i], 3),
-        ha="center"
-    )
-
-    plt.text(
-        x[i],
-        test_acc[i] - 0.015,
-        round(test_acc[i], 3),
-        ha="center"
-    )
-
 plt.ylabel("Accuracy")
-plt.xlabel("Methods")
-
 plt.title("Training vs Testing Accuracy")
 
 plt.legend()
@@ -51,3 +148,9 @@ plt.legend()
 plt.grid(True)
 
 plt.show()
+
+
+</p>
+
+</body>
+</html>
