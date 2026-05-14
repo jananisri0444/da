@@ -1,0 +1,53 @@
+
+plt.figure(figsize=(9, 5))
+
+x = np.arange(len(methods))
+
+plt.plot(
+    x,
+    train_acc,
+    marker="o",
+    markersize=8,
+    linewidth=3,
+    linestyle="-",
+    label="Train Accuracy"
+)
+
+plt.plot(
+    x,
+    test_acc,
+    marker="s",
+    markersize=8,
+    linewidth=3,
+    linestyle="--",
+    label="Test Accuracy"
+)
+
+plt.xticks(x, methods)
+
+for i in range(len(methods)):
+
+    plt.text(
+        x[i],
+        train_acc[i] + 0.005,
+        round(train_acc[i], 3),
+        ha="center"
+    )
+
+    plt.text(
+        x[i],
+        test_acc[i] - 0.015,
+        round(test_acc[i], 3),
+        ha="center"
+    )
+
+plt.ylabel("Accuracy")
+plt.xlabel("Methods")
+
+plt.title("Training vs Testing Accuracy")
+
+plt.legend()
+
+plt.grid(True)
+
+plt.show()
