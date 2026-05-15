@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+</head>
+
+<body>
+
+<h1>Exercise 1</h1>
+
+<pre>
+
+import yfinance as yf
+import pandas as pd
+import matplotlib.pyplot as plt
+
+def main():
+    stock_symbol = input().upper()
+
+    data = yf.Ticker(stock_symbol).history(period="3mo", interval="1d")
+
+    if data.empty:
+        print("No data found.")
+        return
+
+    data = data[["Open", "High", "Low", "Close", "Volume"]]
+
+    print(data.head(10).round(2).to_string())
+    print(data.tail(10).round(2).to_string())
+
+    close = data["Close"]
+
+    mean_val = close.mean()
+    median_val = close.median()
+    mode_val = close.mode()[0] if not close.mode().empty else "No mode"
+
+    variance = close.var()
+    std_dev = close.std()
+    data_range = close.max() - close.min()
+    iqr = close.quantile(0.75) - close.quantile(0.25)
+    skewness = close.skew()
+    kurtosis = close.kurtosis()
+    mad = (close - mean_val).abs().mean()
+
+    results = pd.DataFrame({
+        "Metric": [
+            "Mean", "Median", "Mode", "Variance", "Std Dev",
+            "Range", "IQR", "MAD", "Skewness", "Kurtosis", "Count"
+        ],
+        "Value": [
+            round(mean_val, 2),
+            round(median_val, 2),
+            mode_val,
+            round(variance, 2),
+            round(std_dev, 2),
+            round(data_range, 2),
+            round(iqr, 2),
+            round(mad, 2),
+            round(skewness, 2),
+            round(kurtosis, 2),
+            len(close)
+        ]
+    })
+
+    print(results.to_string(index=False))
+
+    latest_price = close.iloc[-1]
+    first_price = close.iloc[0]
+    price_change = latest_price - first_price
+    percent_change = (price_change / first_price) * 100
+
+    avg_volume = data["Volume"].mean()
+    max_price = close.max()
+    min_price = close.min()
+
+    print("\nSummary Report:\n")
+    print(f"The latest stock price stands at {latest_price:.2f}.")
+    print(f"The average closing price over the last 3 months is {mean_val:.2f}.")
+    print(f"The highest price recorded was {max_price:.2f}, while the lowest was {min_price:.2f}.")
+    print(f"The stock price changed by {price_change:.2f}, representing a {percent_change:.2f}% change over the period.")
+    print(f"The average trading volume was {int(avg_volume)} shares.")
+    print(f"Price variability is reflected by a standard deviation of {std_dev:.2f}.")
+    print(f"The distribution shows a skewness of {skewness:.2f} and kurtosis of {kurtosis:.2f}.")
+
+    data["MA_7"] = close.rolling(window=7).mean()
+
+    plt.figure()
+    plt.plot(data.index, close, label="Close")
+    plt.plot(data.index, data["MA_7"], label="MA_7")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+if __name__ == "__main__":
+    main()
+
+</pre>
+
+</body>
+</html>
