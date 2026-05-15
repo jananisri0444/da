@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Exercise 1</title>
+</head>
+
+<body>
+
+<h1>Exercise 1</h1>
+
+<pre>
+import pandas as pd
+import numpy as np
+
+np.random.seed(42)
+
+n_patients = 80000
+n_doctors = 2000
+n_visits = 200000
+n_labs = 500000
+
+patients = pd.DataFrame({
+    "patient_id": np.arange(1, n_patients+1),
+    "age": np.random.randint(1, 90, n_patients),
+    "gender": np.random.choice(["Male","Female"], n_patients),
+    "city": np.random.choice(["Chennai","Mumbai","Delhi","Bangalore","Hyderabad"], n_patients)
+})
+
+doctors = pd.DataFrame({
+    "doctor_id": np.arange(1, n_doctors+1),
+    "specialization": np.random.choice(
+        ["Cardiology","Neurology","Orthopedics","General","Pediatrics"], n_doctors),
+    "experience_years": np.random.randint(1, 40, n_doctors)
+})
+
+visits = pd.DataFrame({
+    "visit_id": np.arange(1, n_visits+1),
+    "patient_id": np.random.randint(1, n_patients+1, n_visits),
+    "doctor_id": np.random.randint(1, n_doctors+1, n_visits),
+    "visit_date": pd.to_datetime(
+        np.random.choice(pd.date_range("2022-01-01","2024-12-31"), n_visits)
+    ),
+    "diagnosis": np.random.choice(
+        ["Diabetes","Hypertension","Flu","Injury","Infection"], n_visits)
+})
+
+lab_tests = ["Blood Sugar","Cholesterol","Hemoglobin","WBC Count"]
+
+lab_results = pd.DataFrame({
+    "visit_id": np.random.randint(1, n_visits+1, n_labs),
+    "test_name": np.random.choice(lab_tests, n_labs),
+    "test_value": np.random.uniform(0, 300, n_labs)
+})
+
+print(patients)
+
+print(doctors)
+
+print(visits)
+
+lab_tests
+
+df = visits.merge(patients, on="patient_id") \
+           .merge(doctors, on="doctor_id")
+print(df)
+
+full_df = df.merge(lab_results, on="visit_id")
+print(full_df)
+
+print("pivot")
+pivot_df = full_df.pivot_table(
+    index="visit_id",
+    columns="test_name",
+    values="test_value",
+    aggfunc="mean"
+).reset_index()
+print(pivot_df)
+
+df1 = visits[visits["visit_date"].dt.year == 2022]
+df2 = visits[visits["visit_date"].dt.year == 2023]
+
+combined = pd.concat([df1, df2])
+print(combined)
+
+melted = pd.melt(
+    pivot_df,
+    id_vars=["visit_id"],
+    var_name="test_name",
+    value_name="value"
+)
+print(melted)
+
+analysis = full_df.pivot_table(
+    index="diagnosis",
+    columns="test_name",
+    values="test_value",
+    aggfunc="mean"
+)
+print(analysis)
+
+
+</pre>
+
+</body>
+</html>
