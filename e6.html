@@ -1,1 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title> </title>
+</head>
 
+<body>
+
+<h1>Exercise 1</h1>
+
+<pre>
+import kagglehub
+import pandas as pd
+from scipy import stats
+from statsmodels.stats.weightstats import ztest
+
+path = kagglehub.dataset_download("ranitsarkar01/yulu-bike-sharing-data")
+
+df = pd.read_csv(f"{path}/yulu_bike_sharing_dataset.csv")
+
+working = df[df["workingday"] == 1]["count"]
+non_working = df[df["workingday"] == 0]["count"]
+
+t_stat, t_p = stats.ttest_ind(working, non_working, equal_var=False)
+
+print("T-Test")
+print("t-statistic:", round(t_stat, 4))
+print("p-value:", round(t_p, 8))
+
+z_stat, z_p = ztest(df["count"], value=df["count"].mean())
+
+print("\nZ-Test")
+print("z-statistic:", round(z_stat, 4))
+print("p-value:", round(z_p, 8))
+
+season_groups = [df[df["season"] == i]["count"] for i in df["season"].unique()]
+
+f_stat1, p_val1 = stats.f_oneway(*season_groups)
+
+print("\nSeason vs Count")
+print("F-statistic:", round(f_stat1, 4))
+print("p-value:", round(p_val1, 8))
+
+weather_groups = [df[df["weather"] == i]["count"] for i in df["weather"].unique()]
+
+f_stat2, p_val2 = stats.f_oneway(*weather_groups)
+
+print("\nWeather vs Count")
+print("F-statistic:", round(f_stat2, 4))
+print("p-value:", round(p_val2, 8))
+
+table = pd.crosstab(df["season"], df["weather"])
+
+chi2, chi_p, dof, expected = stats.chi2_contingency(table)
+
+print("\nChi-Square Test")
+print("chi-square:", round(chi2, 4))
+print("p-value:", round(chi_p, 8))
+
+
+</pre>
+
+</body>
+</html>
