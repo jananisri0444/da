@@ -10,6 +10,77 @@
 <h1></h1>
 
 <pre>
+import yfinance as yf
+import pandas as pd
+df=yf.download("MSFT",start='2020-01-01',end='2025-01-01')
+print(df.head())
+
+df.dropna(inplace=True)
+
+import matplotlib.pyplot as plt
+plt.figure(figsize=(13,8))
+plt.plot(df['Close'])
+plt.xlabel('trend')
+plt.show()
+
+from statsmodels.tsa.stattools import adfuller
+result=adfuller(df['Close'])
+
+df.isnull().sum()
+
+df['Close']=df['Close'].fillna(df['Close'].mean())
+
+df.head()
+
+df.isnull().sum()
+
+print("adf:",result[0])
+print("p-value:",result[1])
+if (result[1]>0.05):
+    df['Close']=df['Close'].diff()
+df.dropna(inplace=True)
+r2=adfuller(df['Close'])
+print("after differencing adf:",r2[0])
+print("p-value:",r2[1])
+
+plt.plot(df['Close'])
+plt.show()
+
+from statsmodels.graphics.tsaplots import plot_acf,plot_pacf
+plot_acf(df['Close'])
+plt.show()
+
+plot_pacf(df['Close'])
+plt.show()
+
+train = df.iloc[:int(len(df)*0.8)]
+test = df.iloc[int(len(df)*0.8):]
+
+test
+
+from statsmodels.tsa.ar_model import AutoReg
+from statsmodels.tsa.arima_model import ARIMA, ARMA
+from sklearn.metrics import mean_absolute_error
+ar=AutoReg(train['Close'],lags=250).fit()
+p=ar.predict(start=len(train),end=len(train)+len(test)-1)
+print("ar mae:", mean_absolute_error(test['Close'],p))
+plt.plot(test.index,test['Close'],label='Actual')
+plt.plot(test.index,p,label='ar prediction')
+
+from statsmodels.tsa.arima.model import ARIMA
+ar=ARIMA(train['Close'],order=(2,0,5)).fit()
+p=ar.predict(start=len(train),end=len(train)+len(test)-1)
+print("ar mae:", mean_absolute_error(test['Close'],p))
+plt.plot(test.index,test['Close'],label='Actual')
+plt.plot(test.index,p,label='arma prediction')
+
+from statsmodels.tsa.arima.model import ARIMA
+ar=ARIMA(train['Close'],order=(11,2,5)).fit()
+p=ar.predict(start=len(train),end=len(train)+len(test)-1)
+print("ar mae:", mean_absolute_error(test['Close'],p))
+plt.plot(test.index,test['Close'],label='Actual')
+plt.plot(test.index,p,label='arma prediction')
+
 
 </pre>
 </body>
