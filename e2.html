@@ -1,1 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Exercise 1</title>
+</head>
 
+<body>
+
+<h1>Exercise 1</h1>
+
+<pre>
+import kagglehub
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+path = kagglehub.dataset_download("unsdsn/world-happiness")
+
+print("Path to dataset files:", path)
+
+df = pd.read_csv(path + "/2017.csv")
+
+print(df.head())
+
+print(df.info())
+
+print(df.describe())
+
+print(df.isnull().sum())
+
+plt.figure()
+
+sns.histplot(df["Happiness.Score"], bins=20, kde=True)
+
+plt.title("Distribution of Happiness Score (2017)")
+
+plt.xlabel("Happiness Score")
+
+plt.ylabel("Count")
+
+plt.show()
+
+top10 = df.sort_values("Happiness.Score", ascending=False).head(10)
+
+plt.figure()    
+
+sns.barplot(
+    x="Happiness.Score",
+    y="Country",
+    data=top10
+)
+
+plt.title("Top 10 Happiest Countries (2017)")
+
+plt.show()
+
+bottom10 = df.sort_values("Happiness.Score").head(10)
+
+plt.figure()
+
+sns.barplot(
+    x="Happiness.Score",
+    y="Country",
+    data=bottom10
+)
+
+plt.title("Bottom 10 Least Happy Countries (2017)")
+
+plt.show()
+
+plt.figure()
+
+sns.scatterplot(
+    x="Economy..GDP.per.Capita.",
+    y="Happiness.Score",
+    data=df
+)
+
+plt.title("GDP per Capita vs Happiness Score")
+
+plt.xlabel("GDP per Capita")
+
+plt.ylabel("Happiness Score")
+
+plt.show()
+
+plt.figure()
+
+sns.scatterplot(
+    x="Health..Life.Expectancy.",
+    y="Happiness.Score",
+    data=df
+)
+
+plt.title("Life Expectancy vs Happiness Score")
+
+plt.xlabel("Life Expectancy")
+
+plt.ylabel("Happiness Score")
+
+plt.show()
+
+plt.figure(figsize=(10, 8))
+
+corr = df.drop(columns=["Country"]).corr()
+
+sns.heatmap(corr, annot=True, cmap="coolwarm")
+
+plt.title("Correlation Heatmap (2017)")
+
+plt.show()
+
+factors = [
+    "Economy..GDP.per.Capita.",
+    "Family",
+    "Health..Life.Expectancy.",
+    "Freedom",
+    "Generosity",
+    "Trust..Government.Corruption.",
+    "Dystopia.Residual"
+]
+
+avg_values = df[factors].mean()
+
+plt.figure(figsize=(8, 8))
+
+plt.pie(
+    avg_values,
+    labels=factors,
+    autopct="%1.1f%%",
+    startangle=140
+)
+
+plt.title("Average Contribution of Factors to Happiness (2017)")
+
+plt.axis("equal")
+
+plt.show()
+
+
+</pre>
+
+</body>
+</html>
