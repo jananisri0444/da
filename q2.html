@@ -9,6 +9,92 @@
 <h1></h1>
 
 <pre>
+import pandas as pd
+import numpy as np
+
+np.random.seed(42)
+
+n = 1000
+regions = ["North", "South", "East", "West"]
+products = ["Electronics", "Clothing", "Furniture", "Groceries"]
+
+df = pd.DataFrame({
+    "Order_ID": np.arange(1, n+1),
+    "Region": np.random.choice(regions, n),
+    "Product_Category": np.random.choice(products, n),
+    "Units_Sold": np.random.randint(1, 20, n),
+    "Unit_Price": np.random.randint(100, 2000, n),
+    "Discount_%": np.random.randint(0, 30, n)
+})
+df["Revenue"] = df["Units_Sold"] * df["Unit_Price"]
+df["Discount_Amount"] = df["Revenue"] * (df["Discount_%"] / 100)
+df["Net_Sales"] = df["Revenue"] - df["Discount_Amount"]
+df.head()
+
+df.info()
+
+df.describe()
+
+print(df['Net_Sales'].skew())
+
+print(df['Net_Sales'].mean())
+
+print(df['Net_Sales'].kurtosis())
+
+a=df['Net_Sales']
+
+print(a.max()-a.min())
+
+print(a.kurtosis())
+
+print(a.var())
+print(a.std())
+
+c=df.corr(numeric_only=True)
+sns.heatmap(c,annot=True)
+plt.show()
+
+c=df.corr(numeric_only=True)
+sns.clustermap(c,annot=True)
+plt.show()
+
+df.columns
+
+sns.scatterplot(x='Unit_Price', y='Discount_%', data=df)
+plt.show()
+
+q1=df['Discount_%'].quantile(0.25)
+q2=df['Discount_%'].quantile(0.75)
+iqr=q2-q1
+l=q1-1.5*iqr
+u=q2-1.5*iqr
+df=df[(df['Discount_%']>l) & (df['Discount_%'])]
+
+df.shape
+
+import scipy.stats as stats
+n=df[df['Region']=='North']['Net_Sales']
+s=df[df['Region']=='South']['Net_Sales']
+e=df[df['Region']=='East']['Net_Sales']
+w=df[df['Region']=='West']['Net_Sales']
+
+t,p=stats.ttest_ind(n,s)
+
+print(p)
+if(p<0.05):
+    print('Diff btw N & S')
+else:
+    print('no diff')
+
+f,p=stats.f_oneway(n,s,e,w)
+print(p)
+if(p<0.05):
+    print('atleast one Region is diff')
+else:
+    print('no diff')
+
+t=stats.ttest_1samp(df['Net_Sales'],popmean=5000)
+print(t)
 
 </pre>
 </body>
