@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title> </title>
+</head>
+
+<body>
+
+<h1>Exercise 1</h1>
+
+<pre>
+import kagglehub
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from statsmodels.tsa.stattools import adfuller, acf, pacf
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from statsmodels.tsa.ar_model import AutoReg
+from statsmodels.tsa.arima.model import ARIMA
+
+path = kagglehub.dataset_download(
+    "shreyanshdangi/co-emissions-across-countries-regions-and-sectors"
+)
+
+df = pd.read_csv(f"{path}/Data.csv")
+
+country_df = df[df["Name"] == "India"].copy()
+
+country_df = country_df.sort_values("year")
+country_df.set_index("year", inplace=True)
+
+ts = country_df["co2"].interpolate()
+
+result = adfuller(ts.dropna())
+
+print("ADF Statistic:", result[0])
+print("p-value:", result[1])
+
+ts_diff = ts.diff().dropna()
+
+plt.figure(figsize=(10,5))
+plt.plot(ts)
+plt.title("Original Series")
+plt.show()
+
+plt.figure(figsize=(10,5))
+plt.plot(ts_diff)
+plt.title("Differenced Series")
+plt.show()
+
+plt.figure(figsize=(12,5))
+
+plt.subplot(1,2,1)
+plot_acf(ts_diff, ax=plt.gca(), lags=20)
+
+plt.subplot(1,2,2)
+plot_pacf(ts_diff, ax=plt.gca(), lags=20)
+
+plt.tight_layout()
+plt.show()
+
+acf_vals = acf(ts_diff, nlags=20)
+pacf_vals = pacf(ts_diff, nlags=20)
+
+threshold = 1.96 / np.sqrt(len(ts_diff))
+
+def cutoff(values):
+    for i in range(1, len(values)):
+        if abs(values[i]) < threshold:
+            return i - 1
+    return len(values) - 1
+
+acf_cutoff = cutoff(acf_vals)
+pacf_cutoff = cutoff(pacf_vals)
+
+print("ACF cutoff:", acf_cutoff)
+print("PACF cutoff:", pacf_cutoff)
+
+
+ar_model = AutoReg(ts_diff.values, lags=2).fit()
+ar_pred = ar_model.predict(start=2, end=len(ts_diff)-1)
+
+plt.figure(figsize=(10,5))
+plt.plot(ts_diff.values, label="Actual")
+plt.plot(range(2, len(ts_diff)), ar_pred, label="AR")
+plt.legend()
+plt.show()
+
+
+arma_model = ARIMA(ts_diff, order=(2,0,2)).fit()
+arma_pred = arma_model.predict(start=0, end=len(ts_diff)-1)
+
+plt.figure(figsize=(10,5))
+plt.plot(ts_diff, label="Actual")
+plt.plot(arma_pred, label="ARMA")
+plt.legend()
+plt.show()
+
+arima_model = ARIMA(ts, order=(2,1,2)).fit()
+arima_pred = arima_model.predict(start=0, end=len(ts)-1)
+
+plt.figure(figsize=(10,5))
+plt.plot(ts, label="Actual")
+plt.plot(arima_pred, label="ARIMA")
+plt.legend()
+plt.show()
+
+
+</pre>
+
+</body>
+</html>
