@@ -1,0 +1,104 @@
+
+import kagglehub
+import pandas as pd
+import re
+import nltk
+import joblib
+
+from nltk.corpus import stopwords
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+import random
+
+nltk.download("stopwords")
+
+path = kagglehub.dataset_download(
+    "jp797498e/twitter-entity-sentiment-analysis"
+)
+
+df = pd.read_csv(
+    f"{path}/twitter_training.csv",
+    header=None
+)
+
+df.columns = ["id", "entity", "sentiment", "tweet"]
+df = df[["sentiment", "tweet"]].dropna()
+
+df = df[df["sentiment"].isin(["Positive", "Negative", "Neutral"])]
+
+df["sentiment"] = df["sentiment"].map({
+    "Positive": 1,
+    "Negative": -1,
+    "Neutral": 0
+})
+
+stop_words = set(stopwords.words("english"))
+
+def clean_text(text):
+    text = str(text).lower()
+    text = re.sub(r"http\S+", "", text)
+    text = re.sub(r"[^a-z\s]", "", text)
+    words = text.split()
+    words = [w for w in words if w not in stop_words]
+    return " ".join(words)
+
+df["clean_text"] = df["tweet"].apply(clean_text)
+
+vectorizer = TfidfVectorizer(max_features=5000)
+X = vectorizer.fit_transform(df["clean_text"])
+y = df["sentiment"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+model = LogisticRegression(max_iter=200)
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+
+print(accuracy_score(y_test, y_pred))
+print(classification_report(y_test, y_pred))
+
+joblib.dump(model, "sentiment_model.pkl")
+joblib.dump(vectorizer, "vectorizer.pkl")
+
+label_map = {1: "Positive", -1: "Negative", 0: "Neutral"}
+
+sample = [
+    "I love this game",
+    "This is terrible",
+    "It is okay"
+]
+
+sample_clean = [clean_text(t) for t in sample]
+sample_vec = vectorizer.transform(sample_clean)
+pred = model.predict(sample_vec)
+
+for text, p in zip(sample, pred):
+    print(text, "->", label_map[p])
+
+text = " ".join(df["clean_text"].astype(str))
+
+def color_func(*args, **kwargs):
+    return random.choice(["green", "red", "blue"])
+
+wc = WordCloud(
+    width=1400,
+    height=700,
+    background_color="white",
+    max_words=300,
+    collocations=False
+).generate(text)
+
+wc.recolor(color_func=color_func)
+
+plt.figure(figsize=(18, 8))
+plt.imshow(wc, interpolation="bilinear")
+plt.axis("off")
+plt.show()
+
