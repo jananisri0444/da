@@ -9,7 +9,157 @@
 <h1></h1>
 
 <pre>
+posts = [
+    "Loving the new AI tools released this week",
+    "The movie was absolutely fantastic",
+    "Traffic in the city is getting worse every day",
+    "This phone battery drains too quickly",
+    "Amazing customer support experience",
+    "The cricket match yesterday was thrilling",
+    "Online classes are becoming more interactive",
+    "Food delivery was delayed again",
+    "New fashion trends are going viral",
+    "The app crashes whenever I open it",
+    "Climate change discussions are increasing online",
+    "The concert tickets sold out in minutes",
+    "Excellent camera quality on this device",
+    "People are excited about electric vehicles",
+    "The product quality was disappointing"
+]
 
+import pandas as pd
+import numpy as np
+import re
+import nltk
+import matplotlib.pyplot as plt
+from collections import Counter
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+nltk.download('punkt')
+nltk.download('stopwords')
+df=pd.DataFrame(posts,columns=['Text'])
+print(df)
+
+df.info()
+
+nltk.download('punkt_tab')
+sw=set(stopwords.words('english'))
+def preprocess(t):
+    t=t.lower()
+    t=re.sub(r'[^a-zA-Z\s]','',t)
+    tk=word_tokenize(t)
+    tk=[i for i in tk if i not in sw]
+    return tk
+df['tk']=df['Text'].astype(str).apply(preprocess)
+df['ct']=df['tk'].apply(lambda x: " ".join(x))
+df['len']=df['tk'].apply(len)
+print(df.head())
+
+print(df['len'].describe())
+
+w=[]
+for i in df['tk']:
+    w.extend(i)
+freq=Counter(w)
+tw=freq.most_common(10)
+
+words=[i[0] for i in tw]
+counts=[i[1] for i in tw]
+
+plt.bar(words,counts)
+plt.show()
+
+import seaborn as sns
+sns.histplot(df['len'],bins=10)
+plt.show()
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.decomposition import LatentDirichletAllocation
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
+from sklearn.preprocessing import LabelEncoder
+import matplotlib.pyplot as plt
+
+tf=TfidfVectorizer()
+x=tf.fit_transform(df['ct'])
+lda=LatentDirichletAllocation(n_components=5,random_state=42)
+lda.fit(x)
+dt = lda.transform(x)
+topic_doc_count = dt.argmax(axis=1)
+for i in range(5):
+    print("Topic", i+1)
+    print("Documents:", sum(topic_doc_count == i))
+    tw = [w[j] for j in lda.components_[i].argsort()[-5:]]
+    print("Top Words:", tw)
+    print()
+for i in range(5):
+    for j in range(i+1, 5):
+        t1 = set([w[k] for k in lda.components_[i].argsort()[-10:]])
+        t2 = set([w[k] for k in lda.components_[j].argsort()[-10:]])
+        common = t1.intersection(t2)
+
+        print(f"Common words between Topic {i+1} and Topic {j+1}:", common)
+
+sentiments = [
+    "Positive",
+    "Positive",
+    "Negative",
+    "Negative",
+    "Positive",
+    "Positive",
+    "Positive",
+    "Negative",
+    "Positive",
+    "Negative",
+    "Neutral",
+    "Positive",
+    "Negative",
+    "Positive",
+    "Negative"
+]
+df=pd.DataFrame({
+    'p':posts,
+    's':sentiments
+})
+
+def preprocess(t):
+    t=t.lower()
+    t=re.sub(r'[^a-zA-Z\s]','',t)
+    tk=word_tokenize(t)
+    tk=[i for i in tk if i not in sw]
+    return tk
+df['tk']=df['p'].astype(str).apply(preprocess)
+df['ct']=df['tk'].apply(lambda x: " ".join(x))
+df['len']=df['tk'].apply(len)
+print(df.head())
+
+from sklearn.preprocessing import LabelEncoder
+le=LabelEncoder()
+df['s']=le.fit_transform(df['s'])
+tf=TfidfVectorizer()
+x=tf.fit_transform(df['ct'])
+
+y=df['s']
+
+from sklearn.tree import DecisionTreeClassifier
+m=DecisionTreeClassifier()
+xtr, xte, ytr, yte = train_test_split(
+    x,
+    y,
+    test_size=0.2,
+    random_state=42
+)
+m.fit(xtr,ytr)
+y=m.predict(xte)
+print(classification_report(yte, y))
+
+sample = ["The app crashes frequently"]
+sample = [preprocess(sample[0])]
+sample = [" ".join(sample[0])]
+x = tf.transform(sample)
+pred = m.predict(x)
+print(le.inverse_transform(pred))
 </pre>
 </body>
 </html>
