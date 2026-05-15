@@ -1,0 +1,93 @@
+
+import kagglehub
+import pandas as pd
+import re
+import nltk
+import matplotlib.pyplot as plt
+
+from nltk.corpus import stopwords
+from gensim import corpora
+from gensim.models import LdaModel
+from wordcloud import WordCloud
+
+nltk.download("stopwords")
+
+stop_words = set(stopwords.words("english"))
+
+path = kagglehub.dataset_download(
+    "shivamb/netflix-shows"
+)
+
+df = pd.read_csv(f"{path}/netflix_titles.csv")
+
+df = df[["title", "description"]].dropna()
+
+def clean_text(text):
+    text = text.lower()
+    text = re.sub(r"[^a-zA-Z ]", " ", text)
+
+    words = text.split()
+
+    words = [
+        w for w in words
+        if w not in stop_words and len(w) > 2
+    ]
+
+    return words
+
+df["tokens"] = df["description"].apply(clean_text)
+
+texts = df["tokens"].tolist()
+
+dictionary = corpora.Dictionary(texts)
+
+corpus = [dictionary.doc2bow(text) for text in texts]
+
+lda_model = LdaModel(
+    corpus=corpus,
+    id2word=dictionary,
+    num_topics=5,
+    random_state=42,
+    passes=10
+)
+
+print("\nTopics\n")
+
+for i, topic in lda_model.print_topics():
+    print("Topic", i)
+    print(topic)
+    print()
+
+topics = []
+
+for doc in corpus:
+    topic = max(lda_model.get_document_topics(doc), key=lambda x: x[1])[0]
+    topics.append(topic)
+
+df["topic"] = topics
+
+print(df[["title", "topic"]].head(10))
+
+topic_counts = df["topic"].value_counts().sort_index()
+
+plt.figure(figsize=(8,5))
+plt.bar(topic_counts.index, topic_counts.values)
+plt.xlabel("Topic")
+plt.ylabel("Number of Documents")
+plt.title("Documents per Topic")
+plt.show()
+
+for i in range(5):
+    words = dict(lda_model.show_topic(i, topn=20))
+
+    wc = WordCloud(
+        width=800,
+        height=400,
+        background_color="white"
+    ).generate_from_frequencies(words)
+
+    plt.figure(figsize=(8,4))
+    plt.imshow(wc, interpolation="bilinear")
+    plt.axis("off")
+    plt.title(f"Topic {i}")
+    plt.show()
