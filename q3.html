@@ -9,7 +9,110 @@
 <h1></h1>
 
 <pre>
+import pandas as pd
+import numpy as np
+import random
+np.random.seed(42)
+n = 1000
+df = pd.DataFrame({
+    "id": np.random.randint(1000, 1200, n),
+    "age": np.random.randint(18, 70, n),
+    "Gen": np.random.choice(["Male", "Female", "male", "FEMALE", None], n),
+    "income": np.random.choice(["Low", "Medium", "High", "med", "high", None], n),
+    "region": np.random.choice(["North", "South", "East", "West", "north", "south"], n),
+    "purchase_history": np.random.randint(0, 100, n),
+    "response_time": np.random.randint(1, 30, n),
+    "campaign": np.random.choice(["Email", "SMS", "Social Media", "email", "sms", None], n)
+})
 
+df["decision"] = np.where(
+    (df["purchase_history"] > 50) & (df["income"].isin(["High", "high"])),
+    "Yes",
+    "No"
+)
+
+df.head()
+
+df2 = pd.DataFrame({
+    "id": np.random.choice(np.arange(1001, 1101), 300),
+    "Product": np.random.choice(["electronics", "clothing", "furniture"], 300),
+    "Sales": np.random.randint(100, 5000, 300),
+    "Discount": np.random.randint(0, 30, 300)
+})
+
+df.drop_duplicates(inplace=True)
+
+df['Gen'] = df['Gen'].str.lower()
+df['income']=df['income'].str.lower()
+df['region']=df['region'].str.lower()
+df['campaign']=df['campaign'].str.lower()
+
+merged=pd.merge(df,df2,on='id')
+merged
+
+pt=merged.pivot_table(
+    values='Sales',
+    index='region',
+    columns='Product',
+    aggfunc='sum'
+)
+print(pt)
+
+m=pt.reset_index().melt(
+    id_vars='region',
+    var_name='Product',
+    value_name='sales'
+)
+print(m)
+
+cdf=merged.groupby(['id','region','Product']).agg({
+    'Sales':'sum',
+    'Discount':'mean',
+    'age':'first'
+}).reset_index()
+print(cdf)
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+le=LabelEncoder()
+for i in ['id', 'region','Product','Sales','Discount','age','Gen','campaign','income']:
+    merged[i]=le.fit_transform(merged[i].astype(str))
+x=merged.drop('decision', axis=1)
+y=merged['decision']
+xtr,xte,ytr,yte=train_test_split(x,y,test_size=0.2,random_state=42)
+
+merged.head(5)
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+lm = LogisticRegression(max_iter=1000)
+lm.fit(xtr,ytr)
+y=lm.predict(xte)
+print("accuracy:", accuracy_score(yte,y))
+print(classification_report(yte,y))
+
+lm = DecisionTreeClassifier()
+lm.fit(xtr,ytr)
+y=lm.predict(xte)
+print("accuracy:", accuracy_score(yte,y))
+print(classification_report(yte,y))
+
+lm = KNeighborsClassifier(n_neighbors=5)
+lm.fit(xtr,ytr)
+y=lm.predict(xte)
+print("accuracy:", accuracy_score(yte,y))
+print(classification_report(yte,y))
+
+from sklearn.metrics import confusion_matrix
+print(confusion_matrix(yte,y))
+
+#optional
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+xtr, xte, ytr, yte = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
 </pre>
 </body>
 </html>
